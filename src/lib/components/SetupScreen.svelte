@@ -567,6 +567,12 @@
 	.model-picker input {
 		padding-right: 42px;
 	}
+	.model-toggle,
+	.browse {
+		display: grid;
+		place-items: center;
+		padding: 0;
+	}
 
 	.model-toggle {
 		position: absolute;
