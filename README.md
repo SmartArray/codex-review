@@ -14,7 +14,7 @@ With all arguments supplied, the app validates and opens the review automaticall
 yarn dev -- \
   --root /path/to/repository \
   --commit abc123 \
-  --session 019... \
+  --session-id 019... \
   --mode commit
 ```
 
@@ -28,7 +28,19 @@ yarn dev -- \
   --mode commit
 ```
 
-Exactly one of `--session <thread-id>` or `--context <message>` is required. `--context-message` is accepted as an alias for `--context`. With a context message, Codex first analyzes the pinned commit/range in the frozen snapshot; every file and hunk explanation then branches from that completed base turn. The setup screen exposes the same choice.
+Exactly one of `--session-id <thread-id>` or `--context <message>` is required. `--session` is accepted as an alias for `--session-id`, and `--context-message` is accepted as an alias for `--context`. With a context message, Codex first analyzes the pinned commit/range in the frozen snapshot; every file and hunk explanation then branches from that completed base turn. The setup screen exposes the same choice.
+
+To compact an existing Codex session before generating explanations, add `--compact` alongside `--session-id`:
+
+```sh
+yarn dev -- \
+  --root /path/to/repository \
+  --commit abc123 \
+  --session-id 019... \
+  --compact
+```
+
+Compaction creates and compacts a review-owned fork; the original Codex session remains untouched. `--compact` cannot be used with `--context`.
 
 `--mode` accepts two values:
 
@@ -41,7 +53,7 @@ Analysis defaults to `gpt-5.4-mini` with medium reasoning effort. Override the m
 yarn dev -- \
   --root /path/to/repository \
   --commit abc123 \
-  --session 019... \
+  --session-id 019... \
   --mode commit \
   --model gpt-5.3-codex
 ```
@@ -58,7 +70,7 @@ For example, to review everything since `HEAD~3`, including current tracked work
 yarn dev -- \
   --root /path/to/repository \
   --commit HEAD~3 \
-  --session 019... \
+  --session-id 019... \
   --mode range
 ```
 
