@@ -1,5 +1,7 @@
 # Codex Review
 
+![Codex Review](docs/banner.png)
+
 Codex Review is a macOS-first, read-only Electron workspace for understanding agent-authored Git changes. It freezes a commit or tracked working-tree range into an owned temporary clone, renders the complete file tree and side-by-side diff, and prepares explanation-only overviews, hunk details, Q&A, and a teaching-order Story Mode through Codex.
 
 The selected repository and any supplied Codex session are never edited. Git, SQLite, the analysis queue, and Codex orchestration run in an Electron utility process; the sandboxed renderer receives only the typed API exposed by preload.
