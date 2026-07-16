@@ -108,7 +108,7 @@ test('loads a frozen commit diff, full file tree, search, and keyboard navigatio
 		const page = await application.firstWindow();
 		await expect(page.locator('.app-shell')).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByRole('contentinfo', { name: 'Review status' })).toBeVisible();
-		await expect(page.getByText(/tokens · \d+ calls?/)).toBeVisible();
+		await expect(page.getByText(/out · \d+ calls?/)).toBeVisible();
 		await expect(page.locator('.setup-shell')).toHaveCount(0);
 		await expect(page.getByRole('treeitem', { name: /app.ts/ })).toBeVisible();
 		await expect(page.getByRole('treeitem', { name: /stable.ts/ })).toBeVisible();
@@ -184,15 +184,15 @@ test('compacts an existing session through the mocked native app-server operatio
 	try {
 		const page = await application.firstWindow();
 		await expect(page.locator('.app-shell')).toBeVisible({ timeout: 30_000 });
-		await expect(page.getByLabel('140 Codex tokens used across 1 call')).toBeVisible({
-			timeout: 20_000
-		});
+		await expect(
+			page.getByLabel('Codex tokens used: 120 input, 20 output, across 1 call')
+		).toBeVisible({ timeout: 20_000 });
 		await page.getByRole('button', { name: /Commits/ }).click();
 		await page.getByRole('button', { name: /feature/ }).click();
 		await expect(page.getByRole('dialog', { name: 'Commits' })).toHaveCount(0);
-		await expect(page.getByLabel('140 Codex tokens used across 1 call')).toBeVisible({
-			timeout: 20_000
-		});
+		await expect(
+			page.getByLabel('Codex tokens used: 120 input, 20 output, across 1 call')
+		).toBeVisible({ timeout: 20_000 });
 	} finally {
 		await closeApplication(application);
 	}

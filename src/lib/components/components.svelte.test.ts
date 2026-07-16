@@ -298,9 +298,13 @@ describe('review components', () => {
 			}
 		});
 		await expect
-			.element(screen.getByLabelText('13,500 Codex tokens used across 3 calls'))
+			.element(
+				screen.getByLabelText('Codex tokens used: 12,000 input, 1,500 output, across 3 calls')
+			)
 			.toBeVisible();
-		await expect.element(screen.getByText('13,500')).toBeVisible();
+		await expect.element(screen.getByText('13,500')).not.toBeInTheDocument();
+		await expect.element(screen.getByText('12,000')).toBeVisible();
+		await expect.element(screen.getByText('1,500')).toBeVisible();
 	});
 
 	it('morphs completed progress into the Story Mode button', async () => {

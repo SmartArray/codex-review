@@ -21,12 +21,14 @@
 	<div
 		class="codex-usage"
 		title={detail}
-		aria-label={`${format(usage.totalTokens)} Codex tokens used across ${usage.invocationCount} ${invocationLabel}`}
+		aria-label={`Codex tokens used: ${format(usage.inputTokens)} input, ${format(usage.outputTokens)} output, across ${usage.invocationCount} ${invocationLabel}`}
 	>
 		<Sparkles size={10} />
 		<span>Codex</span>
-		<strong>{format(usage.totalTokens)}</strong>
-		<span>tokens · {usage.invocationCount} {invocationLabel}</span>
+		<strong>{format(usage.inputTokens)}</strong>
+		<span>in ·</span>
+		<strong>{format(usage.outputTokens)}</strong>
+		<span>out · {usage.invocationCount} {invocationLabel}</span>
 	</div>
 </footer>
 
