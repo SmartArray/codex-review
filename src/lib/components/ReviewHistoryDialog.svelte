@@ -167,6 +167,7 @@
 	dialog {
 		width: min(820px, calc(100vw - 48px));
 		max-height: min(760px, calc(100vh - 64px));
+		margin: auto;
 		padding: 0;
 		overflow: hidden;
 		border: 1px solid var(--border-strong);
