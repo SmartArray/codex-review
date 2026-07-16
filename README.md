@@ -47,6 +47,9 @@ Compaction creates and compacts a review-owned fork; the original Codex session 
 - `commit` (default): compares the selected commit with its first parent. A root commit is compared with Git's object-format empty tree.
 - `range`: compares the selected revision with the current `HEAD`, including staged and unstaged changes to tracked files. Untracked files are excluded.
 
+> [!IMPORTANT]
+> In `range` mode, the commit supplied through `--commit` is the exclusive lower boundary. For example, `--commit abc123` reviews changes made _after_ `abc123` through the current `HEAD`; it does not include the changes introduced by `abc123` itself. Use `--commit abc123~` to include `abc123` in the review.
+
 Analysis defaults to `gpt-5.4-mini` with medium reasoning effort. Override the model with the optional `--model <model-id>` argument:
 
 ```sh
