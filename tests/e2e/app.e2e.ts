@@ -154,9 +154,9 @@ async function git(...args: string[]): Promise<string> {
 		cwd: fixtureRoot,
 		env: {
 			...process.env,
-			GIT_AUTHOR_NAME: 'Codex Explain E2E',
+			GIT_AUTHOR_NAME: 'Codex Review E2E',
 			GIT_AUTHOR_EMAIL: 'e2e@example.invalid',
-			GIT_COMMITTER_NAME: 'Codex Explain E2E',
+			GIT_COMMITTER_NAME: 'Codex Review E2E',
 			GIT_COMMITTER_EMAIL: 'e2e@example.invalid'
 		}
 	});

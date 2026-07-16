@@ -1,4 +1,4 @@
-# Codex Explain — Diff-Focused Agent Review IDE
+# Codex Review — Diff-Focused Agent Review IDE
 
 ## Summary and fixed scope
 
@@ -17,7 +17,7 @@ Build a macOS-first Electron application for understanding agent-generated chang
 Support both terminal arguments and an in-app setup screen:
 
 ```text
-codex-explain \
+codex-review \
   --root <repository-path> \
   --commit <git-revision-expression> \
   (--session <local-codex-thread-id> | --context <message>) \

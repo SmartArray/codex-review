@@ -1,11 +1,11 @@
 ---
-name: open-codex-explain
-description: Open Codex Explain for the active Codex session and current workspace repository. Use when the user asks to explain, review, walk through, or visualize the changes from the current Codex session in Codex Explain.
+name: open-codex-review
+description: Open Codex Review for the active Codex session and current workspace repository. Use when the user asks to explain, review, walk through, or visualize changes from the current Codex session in Codex Review.
 ---
 
-# Open Codex Explain
+# Open Codex Review
 
-Launch Codex Explain with the active session and repository instead of asking the user to copy identifiers.
+Launch Codex Review with the active session and repository instead of asking the user to copy identifiers.
 
 ## Workflow
 
@@ -14,7 +14,7 @@ Launch Codex Explain with the active session and repository instead of asking th
 3. Run:
 
 ```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/open-codex-explain/scripts/launch.py"
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/open-codex-review/scripts/launch.py"
 ```
 
 The launcher chooses range mode for tracked working-tree changes and commit mode otherwise. It passes `--root`, `--session`, `--commit`, and `--mode` explicitly.
@@ -24,7 +24,7 @@ The launcher chooses range mode for tracked working-tree changes and commit mode
 Forward user choices to the launcher:
 
 ```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/open-codex-explain/scripts/launch.py" \
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/open-codex-review/scripts/launch.py" \
   --root /path/to/repository \
   --commit HEAD~2 \
   --mode range \

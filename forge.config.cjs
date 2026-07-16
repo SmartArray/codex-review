@@ -1,7 +1,7 @@
 module.exports = {
 	packagerConfig: {
-		name: 'Codex Explain',
-		executableName: 'codex-explain',
+		name: 'Codex Review',
+		executableName: 'codex-review',
 		appBundleId: 'dev.codex-explain.app',
 		asar: {
 			unpack: '**/node_modules/@openai/codex-*/**'

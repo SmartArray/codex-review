@@ -80,7 +80,7 @@
 	<div class="window">
 		<header>
 			<div>
-				<small>Codex Explain</small>
+				<small>Codex Review</small>
 				<h2 id="settings-title">Settings</h2>
 			</div>
 			<button type="button" onclick={() => dialog.close()} aria-label="Close settings"

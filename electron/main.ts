@@ -66,7 +66,7 @@ class ReviewWorkerBroker {
 		if (this.worker) return this.worker;
 		if (this.shuttingDown) throw new Error('The review service is shutting down.');
 		const worker = utilityProcess.fork(path.join(import.meta.dirname, 'worker.js'), [], {
-			serviceName: 'Codex Explain Review Engine',
+			serviceName: 'Codex Review Engine',
 			cwd: app.getPath('temp'),
 			stdio: ['ignore', 'ignore', 'ignore'],
 			env: {
@@ -162,7 +162,7 @@ const speech = new SpeechService(
 
 function launchSpeechTask(modulePath: string): SpeechTaskProcess {
 	const child = utilityProcess.fork(modulePath, [], {
-		serviceName: 'Codex Explain Speech Engine',
+		serviceName: 'Codex Review Speech Engine',
 		cwd: app.getPath('temp'),
 		stdio: 'ignore',
 		allowLoadingUnsignedLibraries: process.platform === 'darwin'
@@ -204,7 +204,7 @@ function createWindow(): void {
 		height: 940,
 		minWidth: 1040,
 		minHeight: 680,
-		title: 'Codex Explain',
+		title: 'Codex Review',
 		backgroundColor: '#0f1115',
 		show: false,
 		titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',

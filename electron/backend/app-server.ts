@@ -107,7 +107,7 @@ export class CodexAppServer {
 		});
 
 		await this.request('initialize', {
-			clientInfo: { name: 'codex-explain', title: 'Codex Explain', version: '0.0.1' },
+			clientInfo: { name: 'codex-review', title: 'Codex Review', version: '0.0.1' },
 			capabilities: {
 				experimentalApi: true,
 				requestAttestation: false,

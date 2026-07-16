@@ -1,4 +1,0 @@
-interface:
-  display_name: 'Open Codex Explain'
-  short_description: 'Open the current session in Codex Explain'
-  default_prompt: 'Use $open-codex-explain to open this workspace and session in Codex Explain.'

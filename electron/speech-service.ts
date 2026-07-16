@@ -519,7 +519,7 @@ export class SpeechService {
 	): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.launchSpeechTask) {
-				reject(new Error('The isolated speech process is unavailable. Restart Codex Explain.'));
+				reject(new Error('The isolated speech process is unavailable. Restart Codex Review.'));
 				return;
 			}
 			let worker: SpeechTaskProcess;

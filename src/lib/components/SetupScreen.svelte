@@ -129,7 +129,7 @@
 		<header>
 			<div class="mark"><GitCompareArrows size={22} /></div>
 			<div>
-				<div class="product"><Sparkles size={12} /> Codex Explain</div>
+				<div class="product"><Sparkles size={12} /> Codex Review</div>
 				<h1>Understand the change,<br />not just the lines.</h1>
 				<p>
 					A read-only, diff-focused workspace that turns source context into a guided explanation.

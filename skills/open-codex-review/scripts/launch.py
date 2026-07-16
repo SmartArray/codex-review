@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch Codex Explain with the active Codex session and workspace repository."""
+"""Launch Codex Review with the active Codex session and workspace repository."""
 
 from __future__ import annotations
 
@@ -13,6 +13,10 @@ import sys
 
 BUNDLE_ID = "dev.codex-explain.app"
 DEVELOPMENT_APP = Path(
+    "/Users/yoshijaeger/Desktop/Projects/Personal/codex-explain/codex-explain/"
+    "out/Codex Review-darwin-arm64/Codex Review.app"
+)
+LEGACY_DEVELOPMENT_APP = Path(
     "/Users/yoshijaeger/Desktop/Projects/Personal/codex-explain/codex-explain/"
     "out/Codex Explain-darwin-arm64/Codex Explain.app"
 )
@@ -52,10 +56,14 @@ def repository_root(workspace: Path, explicit: str | None) -> Path:
 def application_path(explicit: str | None) -> Path:
     candidates = [
         explicit,
+        os.environ.get("CODEX_REVIEW_APP"),
         os.environ.get("CODEX_EXPLAIN_APP"),
+        "/Applications/Codex Review.app",
+        str(Path.home() / "Applications/Codex Review.app"),
         "/Applications/Codex Explain.app",
         str(Path.home() / "Applications/Codex Explain.app"),
         str(DEVELOPMENT_APP),
+        str(LEGACY_DEVELOPMENT_APP),
     ]
     for value in candidates:
         if value and Path(value).expanduser().is_dir():
@@ -71,7 +79,7 @@ def application_path(explicit: str | None) -> Path:
             if value.endswith(".app") and Path(value).is_dir():
                 return Path(value).resolve()
     raise RuntimeError(
-        "Codex Explain.app was not found. Install/package it, set CODEX_EXPLAIN_APP, or pass --app."
+        "Codex Review.app was not found. Install/package it, set CODEX_REVIEW_APP, or pass --app."
     )
 
 
@@ -111,7 +119,7 @@ def main() -> int:
         print(json.dumps({"app": str(app), "workspace": str(workspace), "args": launch_args}, indent=2))
         return 0
     if sys.platform != "darwin":
-        raise RuntimeError("The packaged Codex Explain launcher currently supports macOS.")
+        raise RuntimeError("The packaged Codex Review launcher currently supports macOS.")
     subprocess.run(["open", "-na", str(app), "--args", *launch_args], check=True)
     return 0
 
@@ -120,5 +128,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
-        print(f"open-codex-explain: {error}", file=sys.stderr)
+        print(f"open-codex-review: {error}", file=sys.stderr)
         raise SystemExit(1)

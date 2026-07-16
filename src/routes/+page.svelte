@@ -61,7 +61,7 @@
 	};
 
 	let booting = true;
-	let bootLabel = 'Opening Codex Explain';
+	let bootLabel = 'Opening Codex Review';
 	let setupVisible = true;
 	let initialConfig: Partial<ReviewConfig> = {
 		mode: 'commit',
@@ -135,7 +135,7 @@
 
 	async function initialize() {
 		if (!window.reviewApi) {
-			fatalError = 'Codex Explain must run inside its Electron desktop shell.';
+			fatalError = 'Codex Review must run inside its Electron desktop shell.';
 			booting = false;
 			return;
 		}
@@ -737,7 +737,7 @@
 
 <svelte:head
 	><title
-		>{manifest ? `${manifest.comparison.repositoryName} — Codex Explain` : 'Codex Explain'}</title
+		>{manifest ? `${manifest.comparison.repositoryName} — Codex Review` : 'Codex Review'}</title
 	></svelte:head
 >
 
@@ -768,7 +768,7 @@
 			<div class="traffic-space"></div>
 			<div class="brand">
 				<div class="brand-mark"><GitCompareArrows size={15} /></div>
-				<strong>Codex Explain</strong>
+				<strong>Codex Review</strong>
 			</div>
 			<div class="separator"></div>
 			<div class="repository">

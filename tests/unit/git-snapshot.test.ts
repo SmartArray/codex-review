@@ -25,9 +25,9 @@ async function git(root: string, ...args: string[]): Promise<string> {
 		cwd: root,
 		env: {
 			...process.env,
-			GIT_AUTHOR_NAME: 'Codex Explain Test',
+			GIT_AUTHOR_NAME: 'Codex Review Test',
 			GIT_AUTHOR_EMAIL: 'test@example.invalid',
-			GIT_COMMITTER_NAME: 'Codex Explain Test',
+			GIT_COMMITTER_NAME: 'Codex Review Test',
 			GIT_COMMITTER_EMAIL: 'test@example.invalid'
 		}
 	});
