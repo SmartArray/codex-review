@@ -40,7 +40,9 @@ describe('review history', () => {
 			])
 		);
 		const store = new ReviewHistoryStore(directory);
-		expect(await store.list()).toHaveLength(1);
+		const entries = await store.list();
+		expect(entries).toHaveLength(1);
+		expect(entries[0].config.compactSession).toBe(false);
 		await store.clear();
 		expect(await store.list()).toEqual([]);
 	});
@@ -54,6 +56,7 @@ function config(overrides: Partial<ReviewConfig>): ReviewConfig {
 		model: 'gpt-5.4-mini',
 		detailLevel: 2,
 		fullPreparation: false,
+		compactSession: false,
 		...overrides
 	};
 }

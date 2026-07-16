@@ -34,6 +34,7 @@
 	let model = initial.model ?? DEFAULT_MODEL;
 	let detailLevel = initial.detailLevel ?? 2;
 	let fullPreparation = initial.fullPreparation ?? false;
+	let compactSession = initial.compactSession ?? false;
 	let modelMenuOpen = false;
 	let historyOpen = false;
 	let historyLoading = false;
@@ -49,7 +50,8 @@
 		mode,
 		model: model.trim(),
 		detailLevel,
-		fullPreparation
+		fullPreparation,
+		compactSession: contextSource === 'session' ? compactSession : false
 	};
 	$: complete = Boolean(
 		config.root &&
@@ -101,6 +103,7 @@
 		model = selected.model;
 		detailLevel = selected.detailLevel;
 		fullPreparation = selected.fullPreparation;
+		compactSession = selected.compactSession;
 		sessionId = selected.sessionId ?? '';
 		contextMessage = selected.contextMessage ?? '';
 		contextSource = selected.contextMessage ? 'message' : 'session';
@@ -252,6 +255,19 @@
 							spellcheck="false"
 						/>
 						<small>The completed session turn becomes the baseline for every explanation.</small>
+					</label>
+					<label class="compact-session">
+						<input
+							type="checkbox"
+							bind:checked={compactSession}
+							onchange={() => (validation = null)}
+						/>
+						<span>
+							<strong>Compact session before analysis</strong>
+							<small
+								>Creates a compact review-owned fork. The original Codex session remains untouched.</small
+							>
+						</span>
 					</label>
 				{:else}
 					<label>
@@ -558,6 +574,39 @@
 		font-size: 10px;
 		font-weight: 650;
 		color: inherit;
+	}
+
+	.compact-session {
+		display: grid;
+		grid-template-columns: 16px 1fr;
+		align-items: start;
+		gap: 9px;
+		padding: 10px 11px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: color-mix(in srgb, var(--surface-0) 72%, transparent);
+		cursor: pointer;
+	}
+	.compact-session input {
+		width: 14px;
+		height: 14px;
+		margin: 1px 0 0;
+		padding: 0;
+		accent-color: var(--accent);
+	}
+	.compact-session > span {
+		display: grid;
+		gap: 4px;
+	}
+	.compact-session strong {
+		font-size: 11px;
+		font-weight: 650;
+		color: var(--text-primary);
+	}
+	.compact-session small {
+		font-size: 10px;
+		line-height: 1.45;
+		color: var(--text-muted);
 	}
 
 	.input-row input {

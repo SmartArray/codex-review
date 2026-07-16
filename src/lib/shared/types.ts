@@ -9,6 +9,7 @@ export interface ReviewConfig {
 	model: string;
 	detailLevel: number;
 	fullPreparation: boolean;
+	compactSession: boolean;
 }
 
 export interface ReviewHistoryEntry {

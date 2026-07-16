@@ -185,6 +185,24 @@ describe('review components', () => {
 		expect(validate.mock.calls[0][0]).not.toHaveProperty('sessionId');
 	});
 
+	it('offers session compaction only for an existing session', async () => {
+		const validate = vi.fn();
+		const screen = render(SetupScreen, {
+			initial: { root: '/repo', revision: 'HEAD', sessionId: 'session-1' },
+			onValidate: validate
+		});
+		const compact = screen.getByRole('checkbox', {
+			name: /Compact session before analysis/
+		});
+		await expect.element(compact).not.toBeChecked();
+		await compact.click();
+		await screen.getByRole('button', { name: /Preview comparison/ }).click();
+		expect(validate).toHaveBeenCalledWith(expect.objectContaining({ compactSession: true }));
+
+		await screen.getByRole('radio', { name: 'New context message' }).click();
+		await expect.element(compact).not.toBeInTheDocument();
+	});
+
 	it('restores a recent review into the setup form without submitting it', async () => {
 		const validate = vi.fn();
 		const clear = vi.fn(async () => undefined);
@@ -200,7 +218,8 @@ describe('review components', () => {
 					model: 'gpt-5.3-codex',
 					contextMessage: 'Focus on the startup flow.',
 					detailLevel: 4,
-					fullPreparation: true
+					fullPreparation: true,
+					compactSession: false
 				}
 			}
 		];
@@ -246,7 +265,8 @@ describe('review components', () => {
 				mode: 'commit' as const,
 				model: 'gpt-5.4-mini',
 				detailLevel: 2,
-				fullPreparation: false
+				fullPreparation: false,
+				compactSession: false
 			}
 		};
 		const screen = render(ReviewHistoryDialog, { entries: [entry], onClear: clear });

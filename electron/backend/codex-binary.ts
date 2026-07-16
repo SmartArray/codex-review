@@ -12,6 +12,11 @@ const TARGETS: Record<string, { packageName: string; triple: string }> = {
 };
 
 export function resolveCodexBinary(): string {
+	const testOverride = process.env.CODEX_REVIEW_TEST_CODEX_BINARY;
+	if (process.env.CODEX_REVIEW_TEST_MODE === '1' && testOverride) {
+		if (!existsSync(testOverride)) throw new Error('The test Codex executable could not be found.');
+		return testOverride;
+	}
 	const target = TARGETS[`${process.platform}-${process.arch}`];
 	if (!target) throw new Error(`Codex is not packaged for ${process.platform} ${process.arch}.`);
 	const require = createRequire(import.meta.url);

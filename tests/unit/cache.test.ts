@@ -79,6 +79,8 @@ describe('ReviewCache', () => {
 		store.markThreadArchived('baseline');
 		store.markThreadArchived('child');
 		expect(store.listUnarchivedThreads('review')).toEqual([]);
+		store.recordThread({ id: 'baseline', reviewId: 'next-review', kind: 'baseline' });
+		expect(store.listUnarchivedThreads('next-review')).toEqual(['baseline']);
 		store.close();
 	});
 });

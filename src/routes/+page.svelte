@@ -67,7 +67,8 @@
 		mode: 'commit',
 		model: DEFAULT_MODEL,
 		detailLevel: 2,
-		fullPreparation: false
+		fullPreparation: false,
+		compactSession: false
 	};
 	let validation: ValidationResult | null = null;
 	let validating = false;
@@ -178,7 +179,8 @@
 			mode: value.mode ?? 'commit',
 			model: value.model ?? DEFAULT_MODEL,
 			detailLevel: value.detailLevel ?? 2,
-			fullPreparation: value.fullPreparation ?? false
+			fullPreparation: value.fullPreparation ?? false,
+			compactSession: value.compactSession ?? false
 		};
 	}
 
@@ -655,7 +657,6 @@
 			selectedFileId = null;
 			fileContent = null;
 			progress = EMPTY_PROGRESS;
-			codexUsage = { ...EMPTY_CODEX_USAGE };
 			const result = await window.reviewApi.openRangeReviewItem(itemId);
 			manifest = result.review.manifest;
 			rangeReviewState = result.range;

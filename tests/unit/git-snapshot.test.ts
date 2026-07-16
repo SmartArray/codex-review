@@ -74,7 +74,8 @@ describe('FrozenGitSnapshot', () => {
 			mode: 'range',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 
 		expect(range.items.map((item) => item.title)).toEqual(['head', 'follow up', 'Working changes']);
@@ -110,7 +111,8 @@ describe('FrozenGitSnapshot', () => {
 			mode: 'commit',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 		expect(validation.valid).toBe(true);
 		expect(validation.resolved?.oldRevision).toBe(base);
@@ -122,7 +124,8 @@ describe('FrozenGitSnapshot', () => {
 			mode: 'commit',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 		try {
 			expect(manifest.files.find((file) => file.path === 'src/stable.ts')?.status).toBe(
@@ -155,7 +158,8 @@ describe('FrozenGitSnapshot', () => {
 			mode: 'range',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 		try {
 			expect(manifest.comparison.dirty).toBe(true);
@@ -190,7 +194,8 @@ describe('FrozenGitSnapshot', () => {
 			mode: 'commit',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 		try {
 			expect(manifest.files.filter((file) => file.status === 'added')).toHaveLength(3);
@@ -209,7 +214,8 @@ describe('FrozenGitSnapshot', () => {
 			mode: 'commit',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 		expect(result.valid).toBe(false);
 		expect(result.issues[0].message).toContain('option marker');

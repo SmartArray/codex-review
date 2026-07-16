@@ -240,7 +240,11 @@ export class ReviewCache {
 			.prepare(
 				`INSERT INTO child_threads(id, review_id, kind, parent_thread_id, archived, created_at, updated_at)
 				 VALUES (?, ?, ?, ?, 0, ?, ?)
-				 ON CONFLICT(id) DO UPDATE SET review_id = excluded.review_id, updated_at = excluded.updated_at`
+				 ON CONFLICT(id) DO UPDATE SET
+				 review_id = excluded.review_id,
+				 parent_thread_id = COALESCE(excluded.parent_thread_id, child_threads.parent_thread_id),
+				 archived = 0,
+				 updated_at = excluded.updated_at`
 			)
 			.run(input.id, input.reviewId, input.kind, input.parentThreadId ?? null, now, now);
 	}

@@ -70,7 +70,8 @@ function configKey(config: ReviewConfig): string {
 		config.sessionId ?? null,
 		config.contextMessage ?? null,
 		config.detailLevel,
-		config.fullPreparation
+		config.fullPreparation,
+		config.compactSession
 	]);
 }
 

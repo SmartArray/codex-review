@@ -40,7 +40,12 @@ import {
 	storyCacheKey,
 	type AnalysisCacheContext
 } from './cache.js';
-import { CodexAdapter, contextBaselinePrompt, type ChildThread } from './codex-adapter.js';
+import {
+	CodexAdapter,
+	contextBaselinePrompt,
+	type BaselineContext,
+	type ChildThread
+} from './codex-adapter.js';
 import { resolveCodexBinary } from './codex-binary.js';
 import {
 	FrozenGitSnapshot,
@@ -68,6 +73,8 @@ export class ReviewService {
 	private analysisInitialization?: Promise<void>;
 	private analysisController?: AbortController;
 	private baselineReady = false;
+	private sharedBaseline?: BaselineContext;
+	private analysisWarning?: string;
 	private queue?: PrioritizedAnalysisQueue;
 	private fileThreads = new Map<string, ChildThread>();
 	private hunkThreads = new Map<string, ChildThread>();
@@ -116,11 +123,17 @@ export class ReviewService {
 		return this.startPreparedReview(prepared);
 	}
 
-	private async startPreparedReview(prepared: PreparedComparison): Promise<StartReviewResult> {
+	private async startPreparedReview(
+		prepared: PreparedComparison,
+		preserveSessionState = false
+	): Promise<StartReviewResult> {
 		this.stopped = false;
 		this.config = prepared.config;
-		this.codexUsage = { ...EMPTY_CODEX_USAGE };
-		this.emitEvent({ type: 'codex-usage', usage: this.codexUsage });
+		if (!preserveSessionState) {
+			this.codexUsage = { ...EMPTY_CODEX_USAGE };
+			this.analysisWarning = undefined;
+			this.emitEvent({ type: 'codex-usage', usage: this.codexUsage });
+		}
 		this.emitProgress({ phase: 'indexing', completed: 0, total: 1, label: 'Indexing' });
 		const { snapshot, manifest } = await FrozenGitSnapshot.createPrepared(prepared, (message) => {
 			this.emitProgress({
@@ -171,9 +184,11 @@ export class ReviewService {
 		this.config = undefined;
 		this.rangeReview = undefined;
 		this.activeRangeItemId = 'aggregate';
+		this.sharedBaseline = undefined;
+		this.analysisWarning = undefined;
 	}
 
-	private async closeActiveReview(): Promise<void> {
+	private async closeActiveReview(preserveBaseline = false): Promise<void> {
 		this.stopped = true;
 		this.analysisController?.abort();
 		this.analysisController = undefined;
@@ -189,7 +204,7 @@ export class ReviewService {
 		this.staleTimer = undefined;
 		const adapter = this.adapter;
 		this.adapter = undefined;
-		if (adapter) await adapter.close();
+		if (adapter) await adapter.close({ preserveBaseline });
 		const snapshot = this.snapshot;
 		this.snapshot = undefined;
 		if (snapshot) await snapshot.dispose();
@@ -221,9 +236,9 @@ export class ReviewService {
 	async openRangeReviewItem(itemId: string): Promise<StartReviewResult> {
 		if (!this.rangeReview) throw new Error('Commit navigation is only available in range mode.');
 		const prepared = await prepareRangeReviewItem(this.rangeReview, itemId);
-		await this.closeActiveReview();
+		await this.closeActiveReview(Boolean(this.sharedBaseline?.ownedByReview));
 		this.activeRangeItemId = itemId;
-		return this.startPreparedReview(prepared);
+		return this.startPreparedReview(prepared, true);
 	}
 
 	getManifest(): ReviewManifest | null {
@@ -256,15 +271,45 @@ export class ReviewService {
 			phase: 'overview',
 			completed: 0,
 			total: 1,
-			label: snapshot.config.sessionId ? 'Validating Codex session' : 'Preparing context message'
+			label: snapshot.config.sessionId
+				? this.sharedBaseline
+					? 'Reusing review context'
+					: 'Validating Codex session'
+				: 'Preparing context message'
 		});
 		try {
-			const baseline = snapshot.config.sessionId
-				? await adapter.validateBaseline(snapshot.config.sessionId)
-				: await adapter.createBaseline(
-						contextBaselinePrompt(snapshot.config.contextMessage!, manifest.comparison),
-						controller.signal
-					);
+			let baseline: BaselineContext;
+			if (snapshot.config.sessionId) {
+				if (snapshot.config.compactSession && this.sharedBaseline) {
+					baseline = await adapter.adoptBaseline(this.sharedBaseline);
+				} else {
+					baseline = await adapter.validateBaseline(snapshot.config.sessionId);
+					if (snapshot.config.compactSession) {
+						this.emitProgress({
+							phase: 'overview',
+							completed: 0,
+							total: 1,
+							label: 'Forking Codex session'
+						});
+						const prepared = await adapter.compactBaseline(controller.signal, () =>
+							this.emitProgress({
+								phase: 'overview',
+								completed: 0,
+								total: 1,
+								label: 'Compacting review context'
+							})
+						);
+						baseline = prepared.baseline;
+						this.sharedBaseline = baseline;
+						this.analysisWarning = prepared.warning;
+					}
+				}
+			} else {
+				baseline = await adapter.createBaseline(
+					contextBaselinePrompt(snapshot.config.contextMessage!, manifest.comparison),
+					controller.signal
+				);
+			}
 			if (this.stopped || this.adapter !== adapter) return;
 			this.baselineReady = true;
 			manifest.comparison.baselineSessionId = baseline.threadId;
@@ -835,7 +880,13 @@ export class ReviewService {
 	}
 
 	private emitProgress(progress: ReviewProgress): void {
-		this.emitEvent({ type: 'progress', progress });
+		this.emitEvent({
+			type: 'progress',
+			progress: {
+				...progress,
+				warning: progress.warning ?? this.analysisWarning
+			}
+		});
 	}
 
 	private recordCodexUsage(usage: CodexUsageSummary): void {

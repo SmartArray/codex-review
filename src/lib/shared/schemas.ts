@@ -61,7 +61,8 @@ export const reviewConfigSchema = z
 			.refine((value) => !value.includes('\0'), 'Model contains an invalid character')
 			.default(DEFAULT_MODEL),
 		detailLevel: z.number().int().min(1).max(5).default(2),
-		fullPreparation: z.boolean().default(false)
+		fullPreparation: z.boolean().default(false),
+		compactSession: z.boolean().default(false)
 	})
 	.superRefine((value, context) => {
 		if (Boolean(value.sessionId) === Boolean(value.contextMessage)) {
@@ -69,6 +70,13 @@ export const reviewConfigSchema = z
 				code: 'custom',
 				path: ['general'],
 				message: 'Provide either a Codex session ID or a context message, but not both.'
+			});
+		}
+		if (value.compactSession && !value.sessionId) {
+			context.addIssue({
+				code: 'custom',
+				path: ['compactSession'],
+				message: 'Session compaction requires an existing Codex session ID.'
 			});
 		}
 	});

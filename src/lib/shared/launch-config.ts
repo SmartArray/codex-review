@@ -12,7 +12,7 @@ export function parseLaunchArguments(argv: readonly string[]): Partial<ReviewCon
 		} else if (argument === '--commit' && next) {
 			output.revision = next;
 			index += 1;
-		} else if (argument === '--session' && next) {
+		} else if ((argument === '--session' || argument === '--session-id') && next) {
 			output.sessionId = next;
 			index += 1;
 		} else if ((argument === '--context' || argument === '--context-message') && next) {
@@ -29,11 +29,14 @@ export function parseLaunchArguments(argv: readonly string[]): Partial<ReviewCon
 			index += 1;
 		} else if (argument === '--full-preparation') {
 			output.fullPreparation = true;
+		} else if (argument === '--compact') {
+			output.compactSession = true;
 		}
 	}
 	output.mode ??= 'commit';
 	output.model ??= DEFAULT_MODEL;
 	output.detailLevel ??= 2;
 	output.fullPreparation ??= false;
+	output.compactSession ??= false;
 	return output;
 }

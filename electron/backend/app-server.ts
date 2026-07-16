@@ -34,6 +34,39 @@ const forkResponseSchema = z.object({
 	cwd: z.string()
 });
 
+const tokenUsageBreakdownSchema = z.object({
+	inputTokens: z.number().int().nonnegative(),
+	cachedInputTokens: z.number().int().nonnegative(),
+	outputTokens: z.number().int().nonnegative(),
+	reasoningOutputTokens: z.number().int().nonnegative(),
+	totalTokens: z.number().int().nonnegative()
+});
+
+const tokenUsageNotificationSchema = z.object({
+	threadId: z.string(),
+	turnId: z.string(),
+	tokenUsage: z.object({ last: tokenUsageBreakdownSchema })
+});
+
+const compactionItemNotificationSchema = z.object({
+	threadId: z.string(),
+	turnId: z.string(),
+	item: z.object({ type: z.literal('contextCompaction') })
+});
+
+const compactedNotificationSchema = z.object({ threadId: z.string(), turnId: z.string() });
+const turnCompletedNotificationSchema = z.object({
+	threadId: z.string(),
+	turn: z.object({
+		id: z.string(),
+		status: z.enum(['completed', 'interrupted', 'failed', 'inProgress'])
+	})
+});
+const turnStartedNotificationSchema = z.object({
+	threadId: z.string(),
+	turn: z.object({ id: z.string() })
+});
+
 interface RpcSuccess {
 	id: number | string;
 	result: unknown;
@@ -48,6 +81,24 @@ interface PendingRequest {
 	resolve(value: unknown): void;
 	reject(error: Error): void;
 	timer: NodeJS.Timeout;
+}
+
+export type AppServerUsage = z.infer<typeof tokenUsageBreakdownSchema>;
+
+export interface CompactResult {
+	turnId: string;
+	usage?: AppServerUsage;
+}
+
+interface PendingCompaction {
+	resolve(value: CompactResult): void;
+	reject(error: Error): void;
+	timer: NodeJS.Timeout;
+	signal?: AbortSignal;
+	abortListener?: () => void;
+	turnId?: string;
+	usageByTurn: Map<string, AppServerUsage>;
+	completedTurns: Map<string, 'completed' | 'interrupted' | 'failed' | 'inProgress'>;
 }
 
 export interface ForkOptions {
@@ -68,10 +119,14 @@ export class CodexAppServer {
 	private lines?: Interface;
 	private nextId = 1;
 	private pending = new Map<number | string, PendingRequest>();
+	private pendingCompactions = new Map<string, PendingCompaction>();
 	private starting?: Promise<void>;
 	private closed = false;
 
-	constructor(private readonly binaryPath: string) {}
+	constructor(
+		private readonly binaryPath: string,
+		private readonly compactionTimeoutMs = 180_000
+	) {}
 
 	async start(): Promise<void> {
 		if (this.process) return;
@@ -125,7 +180,11 @@ export class CodexAppServer {
 		} catch {
 			return;
 		}
-		if (!message || typeof message !== 'object' || !('id' in message)) return;
+		if (!message || typeof message !== 'object') return;
+		if (!('id' in message)) {
+			this.handleNotification(message);
+			return;
+		}
 		const id = (message as { id: number | string }).id;
 		const pending = this.pending.get(id);
 		if (!pending) {
@@ -142,6 +201,82 @@ export class CodexAppServer {
 		} else {
 			pending.resolve((message as RpcSuccess).result);
 		}
+	}
+
+	private handleNotification(message: object): void {
+		if (!('method' in message) || typeof message.method !== 'string' || !('params' in message))
+			return;
+		const method = message.method;
+		const params = message.params;
+		if (method === 'thread/tokenUsage/updated') {
+			const parsed = tokenUsageNotificationSchema.safeParse(params);
+			if (parsed.success) {
+				const pending = this.pendingCompactions.get(parsed.data.threadId);
+				if (pending) pending.usageByTurn.set(parsed.data.turnId, parsed.data.tokenUsage.last);
+			}
+			return;
+		}
+		if (method === 'item/completed') {
+			const parsed = compactionItemNotificationSchema.safeParse(params);
+			if (parsed.success) this.identifyCompactionTurn(parsed.data.threadId, parsed.data.turnId);
+			return;
+		}
+		if (method === 'thread/compacted') {
+			const parsed = compactedNotificationSchema.safeParse(params);
+			if (parsed.success) this.identifyCompactionTurn(parsed.data.threadId, parsed.data.turnId);
+			return;
+		}
+		if (method === 'turn/started') {
+			const parsed = turnStartedNotificationSchema.safeParse(params);
+			if (parsed.success) this.identifyCompactionTurn(parsed.data.threadId, parsed.data.turn.id);
+			return;
+		}
+		if (method === 'turn/completed') {
+			const parsed = turnCompletedNotificationSchema.safeParse(params);
+			if (!parsed.success) return;
+			const pending = this.pendingCompactions.get(parsed.data.threadId);
+			if (!pending) return;
+			pending.completedTurns.set(parsed.data.turn.id, parsed.data.turn.status);
+			this.maybeFinishCompaction(parsed.data.threadId, pending);
+		}
+	}
+
+	private identifyCompactionTurn(threadId: string, turnId: string): void {
+		const pending = this.pendingCompactions.get(threadId);
+		if (!pending) return;
+		pending.turnId = turnId;
+		this.maybeFinishCompaction(threadId, pending);
+	}
+
+	private maybeFinishCompaction(threadId: string, pending: PendingCompaction): void {
+		if (!pending.turnId) return;
+		const status = pending.completedTurns.get(pending.turnId);
+		if (!status || status === 'inProgress') return;
+		this.pendingCompactions.delete(threadId);
+		this.cleanupCompaction(pending);
+		if (status === 'completed') {
+			pending.resolve({ turnId: pending.turnId, usage: pending.usageByTurn.get(pending.turnId) });
+		} else {
+			pending.reject(new Error(`Codex session compaction ${status}.`));
+		}
+	}
+
+	private cleanupCompaction(pending: PendingCompaction): void {
+		clearTimeout(pending.timer);
+		if (pending.signal && pending.abortListener)
+			pending.signal.removeEventListener('abort', pending.abortListener);
+	}
+
+	private cancelCompaction(threadId: string, pending: PendingCompaction, error: Error): void {
+		if (!this.pendingCompactions.delete(threadId)) return;
+		this.cleanupCompaction(pending);
+		if (!pending.turnId) {
+			pending.reject(error);
+			return;
+		}
+		void this.request('turn/interrupt', { threadId, turnId: pending.turnId }, 5_000)
+			.catch(() => undefined)
+			.finally(() => pending.reject(error));
 	}
 
 	private write(message: unknown): void {
@@ -178,6 +313,11 @@ export class CodexAppServer {
 			pending.reject(error);
 		}
 		this.pending.clear();
+		for (const pending of this.pendingCompactions.values()) {
+			this.cleanupCompaction(pending);
+			pending.reject(error);
+		}
+		this.pendingCompactions.clear();
 	}
 
 	async readThread(threadId: string): Promise<AppThread> {
@@ -212,6 +352,53 @@ export class CodexAppServer {
 			model: response.model,
 			modelProvider: response.modelProvider
 		};
+	}
+
+	async compactThread(threadId: string, signal?: AbortSignal): Promise<CompactResult> {
+		await this.start();
+		if (signal?.aborted) throw new Error('Codex session compaction was cancelled.');
+		if (this.pendingCompactions.has(threadId))
+			throw new Error('Codex session compaction is already running.');
+		const completion = new Promise<CompactResult>((resolve, reject) => {
+			const pending: PendingCompaction = {
+				resolve,
+				reject,
+				timer: setTimeout(
+					() =>
+						this.cancelCompaction(
+							threadId,
+							pending,
+							new Error('Codex app-server timed out during session compaction.')
+						),
+					this.compactionTimeoutMs
+				),
+				signal,
+				usageByTurn: new Map(),
+				completedTurns: new Map()
+			};
+			if (signal) {
+				pending.abortListener = () => {
+					this.cancelCompaction(
+						threadId,
+						pending,
+						new Error('Codex session compaction was cancelled.')
+					);
+				};
+				signal.addEventListener('abort', pending.abortListener, { once: true });
+			}
+			this.pendingCompactions.set(threadId, pending);
+		});
+		try {
+			await this.request('thread/compact/start', { threadId }, 30_000);
+		} catch (error) {
+			const pending = this.pendingCompactions.get(threadId);
+			if (pending) {
+				this.pendingCompactions.delete(threadId);
+				this.cleanupCompaction(pending);
+				pending.reject(error instanceof Error ? error : new Error('Codex compaction failed.'));
+			}
+		}
+		return completion;
 	}
 
 	async archiveThread(threadId: string): Promise<void> {

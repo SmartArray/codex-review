@@ -8,7 +8,8 @@ describe('launch arguments', () => {
 			mode: 'commit',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 	});
 
@@ -33,13 +34,25 @@ describe('launch arguments', () => {
 			mode: 'range',
 			model: 'custom-fast-model',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		});
 	});
 
 	it('enables eager analysis only with the full-preparation flag', () => {
 		expect(parseLaunchArguments([]).fullPreparation).toBe(false);
 		expect(parseLaunchArguments(['--full-preparation']).fullPreparation).toBe(true);
+	});
+
+	it('enables native compaction with a canonical or legacy session argument', () => {
+		expect(parseLaunchArguments(['--session-id', 'session-1', '--compact'])).toMatchObject({
+			sessionId: 'session-1',
+			compactSession: true
+		});
+		expect(parseLaunchArguments(['--session', 'session-2', '--compact'])).toMatchObject({
+			sessionId: 'session-2',
+			compactSession: true
+		});
 	});
 
 	it('accepts a context message instead of a session ID', () => {
@@ -55,7 +68,8 @@ describe('launch arguments', () => {
 			mode: 'commit',
 			model: 'gpt-5.4-mini',
 			detailLevel: 2,
-			fullPreparation: false
+			fullPreparation: false,
+			compactSession: false
 		};
 		expect(reviewConfigSchema.safeParse({ ...base, sessionId: 'session' }).success).toBe(true);
 		expect(
@@ -69,6 +83,22 @@ describe('launch arguments', () => {
 				contextMessage: 'Why this changed'
 			}).success
 		).toBe(false);
+	});
+
+	it('accepts compaction only for an existing session', () => {
+		const base = {
+			root: '/repo',
+			revision: 'HEAD',
+			mode: 'commit',
+			model: 'gpt-5.4-mini',
+			detailLevel: 2,
+			fullPreparation: false,
+			compactSession: true
+		};
+		expect(reviewConfigSchema.safeParse({ ...base, sessionId: 'session' }).success).toBe(true);
+		expect(reviewConfigSchema.safeParse({ ...base, contextMessage: 'Explain this.' }).success).toBe(
+			false
+		);
 	});
 
 	it('accepts only detail levels from one to five', () => {
