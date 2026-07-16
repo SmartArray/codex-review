@@ -28,7 +28,12 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --production=false
+
+      - name: Install Electron application bundle
+        run: |
+          yarn install-electron
+          node -e "const fs = require('node:fs'); const executable = require('electron'); if (!fs.existsSync(executable)) throw new Error('Electron executable is missing: ' + executable); console.log('Electron executable:', executable)"
 
       - name: Install Playwright Chromium
         run: yarn playwright install chromium
